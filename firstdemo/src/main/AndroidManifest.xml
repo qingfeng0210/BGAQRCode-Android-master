@@ -41,5 +41,7 @@
             android:screenOrientation="portrait"/>
         <activity android:name="cn.bingoogolapple.qrcode.activity.ErrorActivity"
             android:screenOrientation="portrait"/>
+        <activity android:name="cn.bingoogolapple.qrcode.activity.CheckcodeActivity"
+            android:screenOrientation="portrait"/>
     </application>
 </manifest>

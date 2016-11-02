@@ -13,10 +13,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
-import com.example.dacas.entity.Person;
 import com.example.dacas.util.DialogUtil;
 import com.example.dacas.util.HttpUtil;
-import com.google.gson.Gson;
 
 import org.apache.http.client.ClientProtocolException;
 import org.json.JSONException;
@@ -33,7 +31,7 @@ import cn.bingoogolapple.qrcode.zxingdemo.R;
  */
 
 public class LoginActivity extends Activity {
-    public static final String URL = "http://192.168.191.1:8080/testapp6/login";
+    public static final String URL = "http://login.servicesecurity.cn";
     public static String save_ticket;
     private Button bnLogin = null;
     private EditText nameEdit = null;
@@ -71,7 +69,7 @@ public class LoginActivity extends Activity {
         if(isRemember){
 
             //将账号和密码都设置到文本框中
-            String account = pref.getString("account","");
+            String account = pref.getString("user","");
             String password = pref.getString("password","");
             nameEdit.setText(account);
             pwdEdit.setText(password);
@@ -88,7 +86,7 @@ public class LoginActivity extends Activity {
                     if(loginPro()) {
                         if(rememberPwd.isChecked()){
                             editor.putBoolean("rememberPassword",true);
-                            editor.putString("account",account);
+                            editor.putString("user",account);
                             editor.putString("password",password);
                         }
                         else{
@@ -138,21 +136,28 @@ public class LoginActivity extends Activity {
             result = result.trim();
             try {
                 JSONObject jsonObject = new JSONObject(result);
-                statusLogin = jsonObject.getString("statusLogin");
+                statusLogin = jsonObject.getString("result");
                 if(statusLogin.equals("0")){
-                    ticket = jsonObject.getString("ticket");
+                    //ticket = jsonObject.getString("ticket");
                     Log.d("PostID","正常登录");
                     //保存服务器传回的Ticket
-                    saveTicket(ticket);
+                    //saveTicket(ticket);
                     return true;
                 }else if(statusLogin.equals("1")){
+                    String error = jsonObject.getString("error");
                     DialogUtil.showDialog(LoginActivity.this
-                            , "密码错误，请重新输入！", false);
-                    Log.d("PostID","密码错误....");
+                            , error, false);
+                    Log.d("PostID",error);
                 }else if(statusLogin.equals("2")){
+                    String error = jsonObject.getString("error");
                     DialogUtil.showDialog(LoginActivity.this
-                            , "用户名不存在，请重新输入！", false);
-                    Log.d("PostID", "用户名不存在.....");
+                            , error, false);
+                    Log.d("PostID",error);
+                }else if(statusLogin.equals("3")){
+                    String error = jsonObject.getString("error");
+                    DialogUtil.showDialog(LoginActivity.this
+                            , error, false);
+                    Log.d("PostID",error);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -175,8 +180,9 @@ public class LoginActivity extends Activity {
             //下面开始跟服务器传递数据，使用BasicNameValuePair
             String name = nameEdit.getText().toString().trim();
             String password = pwdEdit.getText().toString().trim();
-            Person person = new Person(name,password);
-            String raw = new Gson().toJson(person);
+           // Person person = new Person(name,password);
+            //String raw = new Gson().toJson(person);
+            String raw = "user="+name+"&password="+password;
             Log.d("PostID",raw);
             result = HttpUtil.postRequest(url,raw);
         } catch (UnsupportedEncodingException e) {
