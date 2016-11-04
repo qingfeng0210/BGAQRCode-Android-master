@@ -3,6 +3,7 @@ package cn.bingoogolapple.qrcode.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
@@ -12,192 +13,178 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TableRow;
 
 import com.example.dacas.util.DialogUtil;
 import com.example.dacas.util.HttpUtil;
 
-import org.apache.http.client.ClientProtocolException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-
 import cn.bingoogolapple.qrcode.zxingdemo.R;
 
-
 /**
- * Created by qingf on 2016/9/28.
+ * Created by qingf on 2016/11/2.
  */
 
-public class LoginActivity extends Activity {
-    public static final String URL = "http://login.servicesecurity.cn";
-    public static String save_ticket;
-    private Button bnLogin = null;
-    private EditText nameEdit = null;
-    private EditText pwdEdit = null;
+public class LoginActivity extends Activity{
+    public static final String URL = "http://login.servicesecurity.cn/service/login";
+    public static final String CODE_URL = "http://login.servicesecurity.cn/code";
+    public static final String COOKIE_URL = "http://login.servicesecurity.cn/service/flush?sn=";
+    private EditText userText = null;
+    private EditText pwdText = null;
     private CheckBox rememberPwd;
     private CheckBox showPwd;
+    private ImageView checkImage;
+    private EditText codeText;
+    private Button buttonCheckLogin = null;
+    private TableRow codeRow;
+
     private SharedPreferences pref;
     private SharedPreferences.Editor editor;
+
+    private String statusLogin = "";
+    private String cookie_sn = "0";
+
     @Override
-    protected void onCreate(final Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        nameEdit = (EditText)findViewById(R.id.edit_name);
-        pwdEdit = (EditText)findViewById(R.id.edit_pwd);
-        //密码状态
-        pwdEdit.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
-        pref = getSharedPreferences("data",MODE_PRIVATE);
-        editor = pref.edit();
-        rememberPwd = (CheckBox) findViewById(R.id.remember_check);
-        showPwd = (CheckBox) findViewById(R.id.show_password);
+        initView();
+        Log.d("PostID","begin");
         showPwd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(showPwd.isChecked()){//当showPwd被选中，密文以明文形式显示
-                    pwdEdit.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+                    pwdText.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
                 }
                 else{//不选中，以密文形式显示
-                    pwdEdit.setTransformationMethod(PasswordTransformationMethod.getInstance());
+                    pwdText.setTransformationMethod(PasswordTransformationMethod.getInstance());
                 }
             }
         });
-        bnLogin = (Button) findViewById(R.id.bnLogin);
+        checkImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    Bitmap bitmap = HttpUtil.getRequest(CODE_URL);
+                    checkImage.setImageBitmap(bitmap);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
         boolean isRemember = pref.getBoolean("remember_password",false);
-
         if(isRemember){
-
             //将账号和密码都设置到文本框中
-            String account = pref.getString("user","");
+            String user = pref.getString("user","");
             String password = pref.getString("password","");
-            nameEdit.setText(account);
-            pwdEdit.setText(password);
+            userText.setText(user);
+            pwdText.setText(password);
             rememberPwd.setChecked(true);
         }
-        bnLogin.setOnClickListener(new View.OnClickListener() {
-
+        buttonCheckLogin.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                // TODO Auto-generated method stub
-                String account = nameEdit.getText().toString();
-                String password = pwdEdit.getText().toString();
-                if(validate()){
-                    if(loginPro()) {
-                        if(rememberPwd.isChecked()){
-                            editor.putBoolean("rememberPassword",true);
-                            editor.putString("user",account);
-                            editor.putString("password",password);
+            public void onClick(View view) {
+                //下面开始跟服务器传递数据，使用BasicNameValuePair
+                String name = userText.getText().toString().trim();
+                String password = pwdText.getText().toString().trim();
+                String postRes = "";
+                String raw = "user="+name+"&password="+password;
+                if(statusLogin.equals("2")) {
+                    String code = codeText.getText().toString().trim();
+                    Log.d("PostID","code: "+code);
+                    raw+="&code="+ code;
+                }
+                Log.d("PostID","statusLogin: "+statusLogin);
+                Log.d("PostID","raw: "+raw);
+                try {
+                    postRes = HttpUtil.postRequest(URL,raw);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if(postRes!=null){
+                    Log.d("PostID","postRes: "+postRes);
+                    postRes = postRes.trim();
+                    try {
+                        JSONObject jsonObject = new JSONObject(postRes);
+                        statusLogin = jsonObject.getString("result");
+                        if (statusLogin.equals("0")) {//{"result":0, "user":"user2"}
+                            Log.d("PostID", "正常登录");
+                            if(rememberPwd.isChecked()){
+                                editor.putBoolean("rememberPassword",true);
+                                editor.putString("user",name);
+                                editor.putString("password",password);
+                            }
+                            else{
+                                editor.clear();
+                            }
+                            editor.commit();
+                            startFlushCookie(COOKIE_URL);
+                            Intent intent = new Intent(LoginActivity.this, ScanChooseActivity.class);
+                            startActivity(intent);
+                        } else if (statusLogin.equals("1")) {//{"result":1,"error":"用户名口令错误"}
+                            String error = jsonObject.getString("error");
+                            DialogUtil.showDialog(LoginActivity.this
+                                    , error, false);
+                            Log.d("PostID", error);
+                        } else if (statusLogin.equals("2")) {//{"result":2,"error":"请输入验证码"}
+                            String error = jsonObject.getString("error");
+                            DialogUtil.showDialog(LoginActivity.this
+                                    , error, false);
+                            Log.d("PostID", error);
+                            //显示并更新验证码
+                            codeRow.setVisibility(View.VISIBLE);
+                            try {
+                                Bitmap bitmap = HttpUtil.getRequest(CODE_URL);
+                                checkImage.setImageBitmap(bitmap);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else if (statusLogin.equals("3")) {//请选择单位，返回[{"code":"dacas.cn","name":""},…]
+                            String error = jsonObject.getString("error");
+                            DialogUtil.showDialog(LoginActivity.this
+                                    , error, false);
+                            Log.d("PostID", error);
+                        } else if (statusLogin.equals("4")) {//用户登录失败10次，请5分钟后再登录
+                            String error = jsonObject.getString("error");
+                            DialogUtil.showDialog(LoginActivity.this
+                                    , error, false);
+                            Log.d("PostID", error);
+                            //buttonCheckLogin.setEnabled(false);
                         }
-                        else{
-                            editor.clear();
-                        }
-                        editor.commit();
-                        Intent intent = new Intent(LoginActivity.this, ScanChooseActivity.class);
-                        startActivity(intent);
-                        //finish();
+                    }catch (JSONException e) {
+                        e.printStackTrace();
                     }
                 }
 
             }
-        });
+         });
     }
-    //实现保存服务器传回的Ticket
-    private boolean saveTicket(String ticket){
-        editor.putString("ticket",ticket);
-        this.save_ticket = ticket;
-        Log.d("Post","saved ticket!");
-        return false;
+    private void initView() {
+        userText = (EditText) findViewById(R.id.edit_user);
+        pwdText = (EditText) findViewById(R.id.edit_password);
+        rememberPwd = (CheckBox) findViewById(R.id.remember_pwd);
+        showPwd = (CheckBox) findViewById(R.id.show_pwd);
+        codeRow = (TableRow) findViewById(R.id.code_row);
+        checkImage = (ImageView) findViewById(R.id.check_image);
+        codeText = (EditText) findViewById(R.id.edit_checkcode);
+        buttonCheckLogin = (Button) findViewById(R.id.bnCheckLogin);
+        //密码状态
+        pwdText.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
+        pref = getSharedPreferences("data",MODE_PRIVATE);
+        editor = pref.edit();
     }
-    // 对用户输入的用户名、密码进行校验
-    private boolean validate()
-    {
-        String username = nameEdit.getText().toString().trim();
-        if (username.equals(""))
-        {
-            DialogUtil.showDialog(this, "用户账户是必填项！", false);
-            return false;
-        }
-        String pwd = pwdEdit.getText().toString().trim();
-        if (pwd.equals(""))
-        {
-            DialogUtil.showDialog(this, "用户口令是必填项！", false);
-            return false;
-        }
-        return true;
-    }
-    private boolean loginPro(){
-        String  statusLogin;
-        String  ticket;
-        Log.d("PostID","begin");
-        String result = doPost(URL);
-        if(result!=null){
-            Log.d("PostID",result);
-            result = result.trim();
-            try {
-                JSONObject jsonObject = new JSONObject(result);
-                statusLogin = jsonObject.getString("result");
-                if(statusLogin.equals("0")){
-                    //ticket = jsonObject.getString("ticket");
-                    Log.d("PostID","正常登录");
-                    //保存服务器传回的Ticket
-                    //saveTicket(ticket);
-                    return true;
-                }else if(statusLogin.equals("1")){
-                    String error = jsonObject.getString("error");
-                    DialogUtil.showDialog(LoginActivity.this
-                            , error, false);
-                    Log.d("PostID",error);
-                }else if(statusLogin.equals("2")){
-                    String error = jsonObject.getString("error");
-                    DialogUtil.showDialog(LoginActivity.this
-                            , error, false);
-                    Log.d("PostID",error);
-                }else if(statusLogin.equals("3")){
-                    String error = jsonObject.getString("error");
-                    DialogUtil.showDialog(LoginActivity.this
-                            , error, false);
-                    Log.d("PostID",error);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-        }
-        return false;
-    }
-
-
-
-    /**
-     * 用Post方式跟服务器传递数据
-     * @param url
-     * @return
-     */
-    private String doPost(String url){
-        String result = "";
+    private void startFlushCookie(String url) {
         try {
-            //下面开始跟服务器传递数据，使用BasicNameValuePair
-            String name = nameEdit.getText().toString().trim();
-            String password = pwdEdit.getText().toString().trim();
-           // Person person = new Person(name,password);
-            //String raw = new Gson().toJson(person);
-            String raw = "user="+name+"&password="+password;
-            Log.d("PostID",raw);
-            result = HttpUtil.postRequest(url,raw);
-        } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ClientProtocolException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            //HttpEntity httpEntity = HttpUtil.getRequest(url);
+            //String responseStr = EntityUtils.toString(httpEntity, HTTP.UTF_8);
+
+            //Log.d("PostID",responseStr);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return result;
-    }
 
+    }
 }

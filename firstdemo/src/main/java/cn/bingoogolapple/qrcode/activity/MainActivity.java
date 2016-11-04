@@ -19,14 +19,14 @@ import java.util.Map;
 public class MainActivity extends Activity {
     public static final String SCAN_URL = "http://192.168.191.1:8080/testapp6/login1";
     private String id_rand;
-    private String ticket;
+    private String ticket = "";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         id_rand = intent.getStringExtra("id_rand");
         Log.d("PostID","id_rand:"+id_rand);
-        ticket = LoginActivity.save_ticket;
+        //ticket = LoginActivity.save_ticket;
         Log.d("PostID","ticket:"+ticket);
         String result = "";
         result = doPost(SCAN_URL);

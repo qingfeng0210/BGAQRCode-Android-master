@@ -1,7 +1,10 @@
 package com.example.dacas.util;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -12,6 +15,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 
+import java.io.InputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
@@ -30,27 +34,31 @@ public class HttpUtil
      * @return 服务器响应字符串
      * @throws Exception
      */
-    public static String getRequest(final String url)
+    public static Bitmap getRequest(final String url)
             throws Exception
     {
-        FutureTask<String> task = new FutureTask<String>(
-                new Callable<String>()
+        FutureTask<Bitmap> task = new FutureTask<Bitmap>(
+                new Callable<Bitmap>()
                 {
                     @Override
-                    public String call() throws Exception
+                    public Bitmap call() throws Exception
                     {
                         // 创建HttpGet对象。
                         HttpGet get = new HttpGet(url);
                         // 发送GET请求
                         HttpResponse httpResponse = httpClient.execute(get);
+                        Bitmap bitmap;
                         // 如果服务器成功地返回响应
                         if (httpResponse.getStatusLine()
                                 .getStatusCode() == HttpStatus.SC_OK)
                         {
-                            // 获取服务器响应字符串
-                            String result = EntityUtils
-                                    .toString(httpResponse.getEntity(), HTTP.UTF_8);
-                            return result;
+                            HttpEntity httpEntity = httpResponse.getEntity();
+                            InputStream is = httpEntity.getContent();
+                            //Log.d("PostID", String.valueOf(is.available()));
+                            // 获取服务器响应的校验码图片
+                            bitmap = BitmapFactory.decodeStream(is);
+                            is.close();
+                            return bitmap;
                         }
                         return null;
                     }

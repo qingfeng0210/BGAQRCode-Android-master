@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="300dp"
     android:layout_height="match_parent"
     android:layout_gravity="center_horizontal"
-    tools:context=".LoginActivity" >
+    android:gravity="center">
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -19,49 +18,84 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:padding="@dimen/title_padding"/>
-    <TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:textSize="@dimen/label_font_size"
             android:text="@string/username" />
         <EditText
-            android:id="@+id/edit_name"
-            android:layout_width="match_parent"
+            android:id="@+id/edit_user"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Input your username......"/>
+            android:layout_weight="20"/>
     </TableRow>
-    <TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:textSize="@dimen/label_font_size"
             android:text="@string/password"/>
         <EditText
-            android:id="@+id/edit_pwd"
-            android:layout_width="match_parent"
+            android:id="@+id/edit_password"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Input your password......"/>
+            android:inputType="textPassword"
+            android:layout_weight="20"/>
     </TableRow>
-
-    <TableRow>
+    <TableRow
+        android:id="@+id/code_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="@dimen/label_font_size"
+            android:text="@string/check_code"/>
+        <EditText
+            android:id="@+id/edit_checkcode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"/>
+        <ImageView
+            android:id="@+id/check_image"
+            android:src="@drawable/check_graph"
+            android:layout_weight="2"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"/>
+    </TableRow>
+    <TableRow
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
 
         <CheckBox
-            android:id="@+id/remember_check"
+            android:id="@+id/remember_pwd"
             android:textSize="@dimen/label_font_size"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/rem_or_not"/>
         <CheckBox
-            android:id="@+id/show_password"
+            android:id="@+id/show_pwd"
             android:textSize="@dimen/label_font_size"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/show_or_not"/>
     </TableRow>
 
     <Button
-        android:id="@+id/bnLogin"
+        android:id="@+id/bnCheckLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/login"/>
