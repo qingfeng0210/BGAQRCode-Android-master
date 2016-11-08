@@ -93,6 +93,7 @@ public class ScanChooseActivity extends Activity implements EasyPermissions.Perm
                 }
             }
         },0,1200);
+
     }
     @Override
     protected void onStart() {
