@@ -73,7 +73,7 @@ public class HttpUtil
      * @return 服务器响应字符串yue1
      * @throws Exception
      */
-    public static String getRequestCookie_sn(final String url)
+    public static String getRequest(final String url)
             throws Exception
     {
         FutureTask<String> task = new FutureTask<String>(
@@ -83,7 +83,7 @@ public class HttpUtil
                     public String call() throws Exception
                     {
                         // 创建HttpGet对象。
-                        HttpGet get = new HttpGet(url+cookie_sn);
+                        HttpGet get = new HttpGet(url);
                         // 发送GET请求
                         HttpResponse httpResponse = httpClient.execute(get);
                         // 如果服务器成功地返回响应
@@ -92,10 +92,7 @@ public class HttpUtil
                         {
                             HttpEntity httpEntity = httpResponse.getEntity();
                             String responseStr = EntityUtils.toString(httpEntity, HTTP.UTF_8);
-                            Log.d("PostID",responseStr);
                             return responseStr;
-                        }else if(httpStatus == HttpStatus.SC_UNAUTHORIZED){
-
                         }
                         return null;
                     }

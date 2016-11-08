@@ -31,7 +31,6 @@ import cn.bingoogolapple.qrcode.zxingdemo.R;
 public class LoginActivity extends Activity{
     public static final String URL = HttpUtil.BASE_URL+"/service/login";
     public static final String CODE_URL = HttpUtil.BASE_URL+"/code";
-    public static final String COOKIE_URL = HttpUtil.BASE_URL+"/service/flush?sn=";
     private EditText userText = null;
     private EditText pwdText = null;
     private CheckBox rememberPwd;
@@ -46,6 +45,7 @@ public class LoginActivity extends Activity{
     private boolean codeLogin = false;
     private String statusLogin = "";
     private String cookie_sn = "0";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +75,7 @@ public class LoginActivity extends Activity{
                 }
             }
         });
-        boolean isRemember = pref.getBoolean("remember_password",false);
+        boolean isRemember = pref.getBoolean("rememberPassword",false);
         if(isRemember){
             //将账号和密码都设置到文本框中
             String user = pref.getString("user","");
@@ -119,7 +119,7 @@ public class LoginActivity extends Activity{
                                 editor.clear();
                             }
                             editor.commit();
-                            startFlushCookie(COOKIE_URL);
+                            //startFlushCookie(COOKIE_URL);
                             Intent intent = new Intent(LoginActivity.this, ScanChooseActivity.class);
                             startActivity(intent);
                         } else if (statusLogin.equals("1")) {//{"result":1,"error":"用户名口令错误"}
@@ -177,8 +177,8 @@ public class LoginActivity extends Activity{
     }
     private void startFlushCookie(String url) {
         try {
-            String responseStr = HttpUtil.getRequestCookie_sn(url);
-            Log.d("PostID",responseStr);
+            String responseStr = HttpUtil.getRequest(url);
+            Log.d("PostID","getCookie:"+responseStr);
         } catch (Exception e) {
             e.printStackTrace();
         }
