@@ -29,9 +29,9 @@ import cn.bingoogolapple.qrcode.zxingdemo.R;
  */
 
 public class LoginActivity extends Activity{
-    public static final String URL = "http://login.servicesecurity.cn/service/login";
-    public static final String CODE_URL = "http://login.servicesecurity.cn/code";
-    public static final String COOKIE_URL = "http://login.servicesecurity.cn/service/flush?sn=";
+    public static final String URL = HttpUtil.BASE_URL+"/service/login";
+    public static final String CODE_URL = HttpUtil.BASE_URL+"/code";
+    public static final String COOKIE_URL = HttpUtil.BASE_URL+"/service/flush?sn=";
     private EditText userText = null;
     private EditText pwdText = null;
     private CheckBox rememberPwd;
@@ -43,7 +43,7 @@ public class LoginActivity extends Activity{
 
     private SharedPreferences pref;
     private SharedPreferences.Editor editor;
-
+    private boolean codeLogin = false;
     private String statusLogin = "";
     private String cookie_sn = "0";
 
@@ -68,7 +68,7 @@ public class LoginActivity extends Activity{
             @Override
             public void onClick(View view) {
                 try {
-                    Bitmap bitmap = HttpUtil.getRequest(CODE_URL);
+                    Bitmap bitmap = HttpUtil.getRequestBitmap(CODE_URL);
                     checkImage.setImageBitmap(bitmap);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -92,13 +92,11 @@ public class LoginActivity extends Activity{
                 String password = pwdText.getText().toString().trim();
                 String postRes = "";
                 String raw = "user="+name+"&password="+password;
-                if(statusLogin.equals("2")) {
+                if(codeLogin) {
                     String code = codeText.getText().toString().trim();
                     Log.d("PostID","code: "+code);
                     raw+="&code="+ code;
                 }
-                Log.d("PostID","statusLogin: "+statusLogin);
-                Log.d("PostID","raw: "+raw);
                 try {
                     postRes = HttpUtil.postRequest(URL,raw);
                 } catch (Exception e) {
@@ -129,7 +127,8 @@ public class LoginActivity extends Activity{
                             DialogUtil.showDialog(LoginActivity.this
                                     , error, false);
                             Log.d("PostID", error);
-                        } else if (statusLogin.equals("2")) {//{"result":2,"error":"请输入验证码"}
+                        } else if (codeLogin||statusLogin.equals("2")) {//{"result":2,"error":"请输入验证码"}
+                            codeLogin = true;
                             String error = jsonObject.getString("error");
                             DialogUtil.showDialog(LoginActivity.this
                                     , error, false);
@@ -137,7 +136,7 @@ public class LoginActivity extends Activity{
                             //显示并更新验证码
                             codeRow.setVisibility(View.VISIBLE);
                             try {
-                                Bitmap bitmap = HttpUtil.getRequest(CODE_URL);
+                                Bitmap bitmap = HttpUtil.getRequestBitmap(CODE_URL);
                                 checkImage.setImageBitmap(bitmap);
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -178,10 +177,8 @@ public class LoginActivity extends Activity{
     }
     private void startFlushCookie(String url) {
         try {
-            //HttpEntity httpEntity = HttpUtil.getRequest(url);
-            //String responseStr = EntityUtils.toString(httpEntity, HTTP.UTF_8);
-
-            //Log.d("PostID",responseStr);
+            String responseStr = HttpUtil.getRequestCookie_sn(url);
+            Log.d("PostID",responseStr);
         } catch (Exception e) {
             e.printStackTrace();
         }

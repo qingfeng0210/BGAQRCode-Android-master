@@ -51,6 +51,7 @@
             android:inputType="textPassword"
             android:layout_weight="20"/>
     </TableRow>
+
     <TableRow
         android:id="@+id/code_row"
         android:layout_width="match_parent"

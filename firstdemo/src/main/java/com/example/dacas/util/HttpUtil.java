@@ -26,15 +26,16 @@ public class HttpUtil
 {
     // 创建HttpClient对象
     static HttpClient httpClient = new DefaultHttpClient();
- /*   public static final String BASE_URL =
-            "http://192.168.191.1:8080/testapp6/login";*/
+    public static final String BASE_URL =
+            "http://login.servicesecurity.cn";
+    private static String cookie_sn = "0";
     /**
      *
      * @param url 发送请求的URL
-     * @return 服务器响应字符串
+     * @return 服务器响应图片yue1
      * @throws Exception
      */
-    public static Bitmap getRequest(final String url)
+    public static Bitmap getRequestBitmap(final String url)
             throws Exception
     {
         FutureTask<Bitmap> task = new FutureTask<Bitmap>(
@@ -66,7 +67,42 @@ public class HttpUtil
         new Thread(task).start();
         return task.get();
     }
+    /**
+     *
+     * @param url 发送请求的URL
+     * @return 服务器响应字符串yue1
+     * @throws Exception
+     */
+    public static String getRequestCookie_sn(final String url)
+            throws Exception
+    {
+        FutureTask<String> task = new FutureTask<String>(
+                new Callable<String>()
+                {
+                    @Override
+                    public String call() throws Exception
+                    {
+                        // 创建HttpGet对象。
+                        HttpGet get = new HttpGet(url+cookie_sn);
+                        // 发送GET请求
+                        HttpResponse httpResponse = httpClient.execute(get);
+                        // 如果服务器成功地返回响应
+                        int httpStatus = httpResponse.getStatusLine().getStatusCode();
+                        if (httpStatus == HttpStatus.SC_OK)
+                        {
+                            HttpEntity httpEntity = httpResponse.getEntity();
+                            String responseStr = EntityUtils.toString(httpEntity, HTTP.UTF_8);
+                            Log.d("PostID",responseStr);
+                            return responseStr;
+                        }else if(httpStatus == HttpStatus.SC_UNAUTHORIZED){
 
+                        }
+                        return null;
+                    }
+                });
+        new Thread(task).start();
+        return task.get();
+    }
     /**
      * @param url 发送请求的URL
      * @param raw 请求参数
@@ -87,7 +123,6 @@ public class HttpUtil
                         StringEntity sEntity = new StringEntity(raw);
                         // 设置请求参数
                         httpRequest.setEntity(sEntity);
-                        HttpClient httpClient = new DefaultHttpClient();
                         // 发送POST请求
                         HttpResponse httpResponse = httpClient.execute(httpRequest);
                         final int ret = httpResponse.getStatusLine().getStatusCode();
@@ -103,5 +138,12 @@ public class HttpUtil
                 });
         new Thread(task).start();
         return task.get();
+    }
+
+    /**
+     *
+     */
+    private void removeAllCookie() {
+
     }
 }
